@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class WeatherService
 {
@@ -15,19 +16,13 @@ class WeatherService
      */
     public function getWeather(string $city = 'Manila'): JsonResponse
     {
-        // Validate city input
         if (empty(trim($city))) {
-            return response()->json([
-                'error' => 'City name cannot be empty'
-            ], 400);
+            return response()->json(['error' => 'City name cannot be empty'], 400);
         }
 
-        // Check if API key is configured
         $apiKey = config('services.openweather.key');
         if (empty($apiKey)) {
-            return response()->json([
-                'error' => 'OpenWeather API key not configured'
-            ], 500);
+            return response()->json(['error' => 'OpenWeather API key not configured'], 500);
         }
 
         try {
@@ -39,15 +34,12 @@ class WeatherService
 
             if ($response->ok()) {
                 $data = $response->json();
+                Log::info('Weather API Response: ', $data); // Debug log
 
-                // Check if necessary data exists in response
                 if (!isset($data['main']) || !isset($data['weather'])) {
-                    return response()->json([
-                        'error' => 'Invalid response from weather API'
-                    ], 500);
+                    return response()->json(['error' => 'Invalid response from weather API'], 500);
                 }
 
-                // Format response data
                 $weather = [
                     'city' => $data['name'] ?? $city,
                     'temperature' => $data['main']['temp'] ?? null,
@@ -62,31 +54,18 @@ class WeatherService
                 return response()->json($weather, 200);
             }
 
-            // Handle specific HTTP status codes
             switch ($response->status()) {
                 case 400:
-                    return response()->json([
-                        'error' => 'Bad request: Invalid city name format'
-                    ], 400);
+                    return response()->json(['error' => 'Bad request: Invalid city name format'], 400);
                 case 401:
-                    return response()->json([
-                        'error' => 'Unauthorized: Invalid API key'
-                    ], 401);
+                    return response()->json(['error' => 'Unauthorized: Invalid API key'], 401);
                 case 404:
-                    return response()->json([
-                        'error' => 'City not found'
-                    ], 404);
+                    return response()->json(['error' => 'City not found'], 404);
                 default:
-                    return response()->json([
-                        'error' => 'Failed to fetch weather data',
-                        'status' => $response->status()
-                    ], 500);
+                    return response()->json(['error' => 'Failed to fetch weather data', 'status' => $response->status()], 500);
             }
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Internal server error',
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'Internal server error', 'message' => $e->getMessage()], 500);
         }
     }
 }

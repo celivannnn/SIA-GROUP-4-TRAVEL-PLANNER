@@ -56,4 +56,16 @@ return [
     'key' => env('UNSPLASH_ACCESS_KEY'),
     ],
 
+
+    'travel_form' => [
+    'url' => env('TRAVEL_FORM_API_URL'),
+    'key' => env('TRAVEL_FORM_API_KEY'),
+    ],
+
+   'aviationstack' => [
+    'key' => env('AVIATIONSTACK_API_KEY'),
+    'base_url' => env('AVIATIONSTACK_BASE_URL', 'http://api.aviationstack.com/v1'),
+    ],
+
+
 ];
