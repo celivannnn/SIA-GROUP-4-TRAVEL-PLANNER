@@ -2,51 +2,46 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
+use App\Models\TravelForm;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class TravelFormService
 {
-    protected $url;
-    protected $key;
-
-    public function __construct()
+    public function getAllForUser(int $userId)
     {
-        $this->url = config('services.travel_form.url');
-        $this->key = config('services.travel_form.key');
+        return TravelForm::where('user_id', $userId)->get();
     }
 
-    public function getAll()
+    public function getByIdForUser(int $id, int $userId)
     {
-        return Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->key,
-        ])->get("{$this->url}/travel-form")->json();
+        $form = TravelForm::where('id', $id)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$form) {
+            throw new ModelNotFoundException("Travel form with ID $id not found or access denied.");
+        }
+
+        return $form;
     }
 
-    public function getById($id)
+    public function createForUser(array $data, int $userId)
     {
-        return Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->key,
-        ])->get("{$this->url}/travel-form/{$id}")->json();
+        $data['user_id'] = $userId;
+        return TravelForm::create($data);
     }
 
-    public function create(array $data)
+    public function updateForUser(int $id, array $data, int $userId)
     {
-        return Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->key,
-        ])->post("{$this->url}/travel-form", $data)->json();
+        $form = $this->getByIdForUser($id, $userId);
+        $form->update($data);
+        return $form;
     }
 
-    public function update($id, array $data)
+    public function deleteForUser(int $id, int $userId)
     {
-        return Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->key,
-        ])->put("{$this->url}/travel-form/{$id}", $data)->json();
-    }
-
-    public function delete($id)
-    {
-        return Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->key,
-        ])->delete("{$this->url}/travel-form/{$id}")->json();
+        $form = $this->getByIdForUser($id, $userId);
+        $form->delete();
+        return true;
     }
 }
